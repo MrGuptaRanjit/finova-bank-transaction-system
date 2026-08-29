@@ -2,9 +2,9 @@ import { NavLink } from "react-router-dom";
 import {
   LayoutDashboard,
   WalletCards,
+  ArrowDownToLine,
   Send,
   ArrowLeftRight,
-  User,
 } from "lucide-react";
 
 const MobileNav = () => {
@@ -20,19 +20,19 @@ const MobileNav = () => {
       icon: WalletCards,
     },
     {
+      name: "Deposit",
+      path: "/deposit",
+      icon: ArrowDownToLine,
+    },
+    {
       name: "Send",
       path: "/send-money",
       icon: Send,
     },
     {
-      name: "Transactions",
+      name: "History",
       path: "/transactions",
       icon: ArrowLeftRight,
-    },
-    {
-      name: "Profile",
-      path: "/profile",
-      icon: User,
     },
   ];
 

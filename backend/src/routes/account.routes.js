@@ -20,6 +20,12 @@ router.get("/",authMiddleware.authMiddleware, accountController.getUserAccountsC
 /**
  * GET /api/accounts/balance/:accountId
  */
-router.get("/balance/:accountId",authMiddleware.authMiddleware,accountController.getAccountBalanceController)
+router.get("/balance/:accountId", authMiddleware.authMiddleware, accountController.getAccountBalanceController);
 
-module.exports = router
+/**
+ * DELETE /api/accounts/:accountId
+ * Close / Delete account (requires 0 balance)
+ */
+router.delete("/:accountId", authMiddleware.authMiddleware, accountController.closeAccountController);
+
+module.exports = router;

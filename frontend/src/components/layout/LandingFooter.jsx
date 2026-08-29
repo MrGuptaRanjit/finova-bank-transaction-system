@@ -1,5 +1,5 @@
 import { ShieldCheck } from "lucide-react";
-import { Link } from "react-router";
+import { Link } from "react-router-dom";
 import Logo from "../ui/Logo";
 
 const LandingFooter = () => {

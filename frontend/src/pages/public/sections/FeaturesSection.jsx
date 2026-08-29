@@ -1,122 +1,116 @@
 import {
   ArrowRight,
-  CheckCircle2,
-  Eye,
-  LockKeyhole,
-  ReceiptText,
-  ShieldCheck,
   TrendingUp,
-  Wallet,
+  WalletCards,
+  Zap,
 } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const FeaturesSection = () => {
   return (
-    <div>
-       <section
-        id="features"
-        className="bg-white py-24 sm:py-28"
-      >
-        <div className="mx-auto max-w-7xl px-5 sm:px-8 lg:px-10">
+    <section id="features" className="relative bg-slate-950 py-24 sm:py-28">
+      {/* Glow */}
+      <div className="pointer-events-none absolute left-1/2 top-1/2 h-96 w-96 -translate-x-1/2 -translate-y-1/2 rounded-full bg-blue-600/5 blur-3xl" />
 
-          {/* Section heading */}
-          <div className="max-w-2xl">
-            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">
-              Banking made simple
+      <div className="relative mx-auto max-w-7xl px-5 sm:px-8 lg:px-10">
+        {/* Section heading */}
+        <div className="max-w-2xl">
+          <p className="text-xs font-bold uppercase tracking-[0.2em] text-blue-400">
+            Engineered For Speed & Accuracy
+          </p>
+
+          <h2 className="mt-3 text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-5xl">
+            Everything you need to manage your money.
+          </h2>
+
+          <p className="mt-4 text-base leading-7 text-slate-400 sm:text-lg">
+            A high-performance banking experience built with double-entry cryptographic ledger architecture, instant transfers, and total transaction transparency.
+          </p>
+        </div>
+
+        {/* Feature cards */}
+        <div className="mt-14 grid gap-6 md:grid-cols-3">
+          {/* Account Management */}
+          <div className="group rounded-3xl border border-white/10 bg-gradient-to-b from-white/[0.05] to-white/[0.02] p-8 transition-all duration-300 hover:-translate-y-1 hover:border-blue-500/30 hover:shadow-2xl hover:shadow-blue-500/10">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-500/10 text-blue-400 transition-colors duration-300 group-hover:bg-blue-600 group-hover:text-white">
+              <WalletCards size={22} />
+            </div>
+
+            <h3 className="mt-6 text-xl font-bold text-white">
+              Multi-Account Management
+            </h3>
+
+            <p className="mt-3 text-sm leading-6 text-slate-400">
+              Open multiple bank accounts in seconds, monitor live ledger-derived balances, and organize your finances seamlessly.
             </p>
 
-            <h2 className="mt-4 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl lg:text-5xl">
-              Everything you need to manage your money.
-            </h2>
-
-            <p className="mt-5 text-base leading-7 text-slate-500 sm:text-lg">
-              A focused banking experience built around accounts,
-              transfers, and complete transaction visibility.
-            </p>
+            <Link
+              to="/accounts"
+              className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-blue-400 transition hover:text-blue-300"
+            >
+              Explore accounts
+              <ArrowRight
+                size={16}
+                className="transition-transform duration-200 group-hover:translate-x-1"
+              />
+            </Link>
           </div>
 
-          {/* Feature cards */}
-          <div className="mt-14 grid gap-5 md:grid-cols-3">
-
-            {/* Account Management */}
-            <div className="group rounded-2xl border border-slate-200 bg-white p-7 transition-all duration-300 hover:-translate-y-1 hover:border-slate-300 hover:shadow-xl hover:shadow-slate-200/50 sm:p-8">
-
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-950 text-white transition-colors duration-300 group-hover:bg-blue-600">
-                <Wallet size={21} />
-              </div>
-
-              <h3 className="mt-6 text-xl font-bold text-slate-950">
-                Account management
-              </h3>
-
-              <p className="mt-3 text-sm leading-6 text-slate-500">
-                View your accounts, monitor balances, and keep your
-                banking information organized from one dashboard.
-              </p>
-
-              <div className="mt-6 flex items-center gap-2 text-sm font-semibold text-slate-900">
-                Manage accounts
-                <ArrowRight
-                  size={16}
-                  className="transition-transform duration-200 group-hover:translate-x-1"
-                />
-              </div>
+          {/* Transfers */}
+          <div className="group rounded-3xl border border-white/10 bg-gradient-to-b from-white/[0.05] to-white/[0.02] p-8 transition-all duration-300 hover:-translate-y-1 hover:border-blue-500/30 hover:shadow-2xl hover:shadow-blue-500/10">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-400 transition-colors duration-300 group-hover:bg-emerald-600 group-hover:text-white">
+              <Zap size={22} />
             </div>
 
-            {/* Transfers */}
-            <div className="group rounded-2xl border border-slate-200 bg-white p-7 transition-all duration-300 hover:-translate-y-1 hover:border-slate-300 hover:shadow-xl hover:shadow-slate-200/50 sm:p-8">
+            <h3 className="mt-6 text-xl font-bold text-white">
+              Instant Zero-Fee Transfers
+            </h3>
 
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-950 text-white transition-colors duration-300 group-hover:bg-blue-600">
-                <ArrowRight size={21} />
-              </div>
+            <p className="mt-3 text-sm leading-6 text-slate-400">
+              Send money between accounts through an atomic transfer workflow protected by idempotency keys and session locking.
+            </p>
 
-              <h3 className="mt-6 text-xl font-bold text-slate-950">
-                Secure transfers
-              </h3>
+            <Link
+              to="/send-money"
+              className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-emerald-400 transition hover:text-emerald-300"
+            >
+              Send funds
+              <ArrowRight
+                size={16}
+                className="transition-transform duration-200 group-hover:translate-x-1"
+              />
+            </Link>
+          </div>
 
-              <p className="mt-3 text-sm leading-6 text-slate-500">
-                Send money between accounts through a clear and
-                secure transfer workflow with proper transaction tracking.
-              </p>
-
-              <div className="mt-6 flex items-center gap-2 text-sm font-semibold text-slate-900">
-                Send money
-                <ArrowRight
-                  size={16}
-                  className="transition-transform duration-200 group-hover:translate-x-1"
-                />
-              </div>
+          {/* Transactions */}
+          <div className="group rounded-3xl border border-white/10 bg-gradient-to-b from-white/[0.05] to-white/[0.02] p-8 transition-all duration-300 hover:-translate-y-1 hover:border-blue-500/30 hover:shadow-2xl hover:shadow-blue-500/10">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-purple-500/10 text-purple-400 transition-colors duration-300 group-hover:bg-purple-600 group-hover:text-white">
+              <TrendingUp size={22} />
             </div>
 
-            {/* Transactions */}
-            <div className="group rounded-2xl border border-slate-200 bg-white p-7 transition-all duration-300 hover:-translate-y-1 hover:border-slate-300 hover:shadow-xl hover:shadow-slate-200/50 sm:p-8">
+            <h3 className="mt-6 text-xl font-bold text-white">
+              Full Statement & Audit
+            </h3>
 
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-950 text-white transition-colors duration-300 group-hover:bg-blue-600">
-                <TrendingUp size={21} />
-              </div>
+            <p className="mt-3 text-sm leading-6 text-slate-400">
+              Search, filter, and inspect detailed digital receipts for every transaction, or export your complete statements to CSV.
+            </p>
 
-              <h3 className="mt-6 text-xl font-bold text-slate-950">
-                Transaction visibility
-              </h3>
-
-              <p className="mt-3 text-sm leading-6 text-slate-500">
-                Review your transaction history and understand exactly
-                where your money is moving.
-              </p>
-
-              <div className="mt-6 flex items-center gap-2 text-sm font-semibold text-slate-900">
-                View transactions
-                <ArrowRight
-                  size={16}
-                  className="transition-transform duration-200 group-hover:translate-x-1"
-                />
-              </div>
-            </div>
-
+            <Link
+              to="/transactions"
+              className="mt-6 inline-flex items-center gap-2 text-sm font-semibold text-purple-400 transition hover:text-purple-300"
+            >
+              View statement
+              <ArrowRight
+                size={16}
+                className="transition-transform duration-200 group-hover:translate-x-1"
+              />
+            </Link>
           </div>
         </div>
-      </section>
-    </div>
-  )
-}
+      </div>
+    </section>
+  );
+};
 
-export default FeaturesSection
+export default FeaturesSection;

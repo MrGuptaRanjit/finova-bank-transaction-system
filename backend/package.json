@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
+    "test:email": "node src/scripts/test-email.js",
     "dev": "npx nodemon server.js",
     "start": "node server.js"
   },

@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 
 import PublicLayout from "../layouts/PublicLayout";
 
@@ -13,7 +13,9 @@ import Dashboard from "../pages/dashboard/Dashboard";
 import Profile from "../pages/dashboard/Profile";
 import Accounts from "../pages/dashboard/Accounts";
 import SendMoney from "../pages/dashboard/SendMoney";
+import Deposit from "../pages/dashboard/Deposit";
 import Transactions from "../pages/dashboard/Transactions";
+import TransactionDetails from "../pages/dashboard/TransactionDetails";
 
 const AppRoutes = () => {
   return (
@@ -38,6 +40,9 @@ const AppRoutes = () => {
           {/* /accounts */}
           <Route path="/accounts" element={<Accounts />} />
 
+          {/* /deposit */}
+          <Route path="/deposit" element={<Deposit />} />
+
           {/* /send-money */}
           <Route path="/send-money" element={<SendMoney />} />
 
@@ -45,15 +50,15 @@ const AppRoutes = () => {
           <Route path="/transactions" element={<Transactions />} />
 
           {/* /transactions/:id */}
-          <Route
-            path="/transactions/:id"
-            element={<div>Transaction Details</div>}
-          />
+          <Route path="/transactions/:id" element={<TransactionDetails />} />
 
           {/* /profile */}
           <Route path="/profile" element={<Profile />} />
         </Route>
       </Route>
+
+      {/* ================= 404 CATCH-ALL ================= */}
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 };

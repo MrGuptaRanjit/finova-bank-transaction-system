@@ -2,6 +2,7 @@ import { Outlet, NavLink, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
   WalletCards,
+  ArrowDownToLine,
   Send,
   ArrowLeftRight,
   User,
@@ -28,6 +29,11 @@ const DashboardLayout = () => {
       name: "Accounts",
       path: "/accounts",
       icon: WalletCards,
+    },
+    {
+      name: "Deposit Funds",
+      path: "/deposit",
+      icon: ArrowDownToLine,
     },
     {
       name: "Send Money",
@@ -60,7 +66,7 @@ const DashboardLayout = () => {
 
         {/* Logo */}
         <div className="flex h-20 items-center border-b border-white/10 px-6">
-          <Logo />
+          <Logo light />
         </div>
 
         {/* Navigation */}

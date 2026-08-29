@@ -13,4 +13,9 @@ router.get(
     authMiddleware,
     authController.getCurrentUserController
 );
+router.delete(
+    "/profile",
+    authMiddleware,
+    authController.deleteUserProfileController
+);
 module.exports = router;

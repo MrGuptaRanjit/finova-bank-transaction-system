@@ -1,86 +1,134 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Bell,
-  Check,
   CheckCheck,
   X,
   ArrowDownLeft,
   ArrowUpRight,
   ShieldCheck,
+  ExternalLink,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import api from "../../services/api";
 
 const NotificationDropdown = () => {
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [readIds, setReadIds] = useState(() => {
+    try {
+      const saved = localStorage.getItem("read_notifications");
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
 
-  const [notifications, setNotifications] = useState([
-    {
-      id: 1,
-      type: "credit",
-      title: "Money received",
-      message: "₹5,000 has been credited to your account.",
-      time: "5 min ago",
-      read: false,
-    },
-    {
-      id: 2,
-      type: "debit",
-      title: "Money sent",
-      message: "₹1,500 was sent successfully.",
-      time: "1 hour ago",
-      read: false,
-    },
-    {
-      id: 3,
-      type: "security",
-      title: "Security update",
-      message: "Your account security settings are up to date.",
-      time: "Yesterday",
-      read: true,
-    },
-  ]);
+  useEffect(() => {
+    const fetchNotificationData = async () => {
+      try {
+        const response = await api.get("/transaction");
+        const txs = response.data?.transactions || [];
 
-  const unreadCount = notifications.filter(
-    (notification) => !notification.read
-  ).length;
+        // Build notifications from real transactions
+        const items = txs.slice(0, 6).map((tx) => {
+          const isReceived = tx.direction === "RECEIVED";
+          const amountFormatted = Number(tx.amount || 0).toLocaleString("en-IN");
+          const date = new Date(tx.createdAt);
+
+          return {
+            id: tx._id,
+            type: isReceived ? "credit" : "debit",
+            title: isReceived ? "Money Received" : "Money Transferred",
+            message: isReceived
+              ? `₹${amountFormatted} credited from ••••${tx.fromAccount?.slice(-4)}`
+              : `₹${amountFormatted} sent to ••••${tx.toAccount?.slice(-4)}`,
+            time: date.toLocaleDateString("en-IN", {
+              month: "short",
+              day: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+            }),
+            read: readIds.includes(tx._id),
+            txId: tx._id,
+          };
+        });
+
+        // Add security welcome notification if empty or at bottom
+        items.push({
+          id: "sec-welcome",
+          type: "security",
+          title: "Session Verified",
+          message: "Double-entry cryptographic ledger security is active.",
+          time: "Today",
+          read: readIds.includes("sec-welcome"),
+        });
+
+        setNotifications(items);
+      } catch (err) {
+        console.error("Failed to load live notifications:", err);
+        // Fallback static notifications
+        setNotifications([
+          {
+            id: "sec-init",
+            type: "security",
+            title: "Security Verified",
+            message: "Your banking account is secured with JWT authentication.",
+            time: "Just now",
+            read: false,
+          },
+        ]);
+      }
+    };
+
+    fetchNotificationData();
+  }, [readIds]);
+
+  const unreadCount = notifications.filter((n) => !n.read).length;
 
   const markAsRead = (id) => {
+    const updated = [...readIds, id];
+    setReadIds(updated);
+    localStorage.setItem("read_notifications", JSON.stringify(updated));
     setNotifications((prev) =>
-      prev.map((notification) =>
-        notification.id === id
-          ? { ...notification, read: true }
-          : notification
-      )
+      prev.map((n) => (n.id === id ? { ...n, read: true } : n))
     );
   };
 
   const markAllAsRead = () => {
-    setNotifications((prev) =>
-      prev.map((notification) => ({
-        ...notification,
-        read: true,
-      }))
-    );
+    const allIds = notifications.map((n) => n.id);
+    setReadIds(allIds);
+    localStorage.setItem("read_notifications", JSON.stringify(allIds));
+    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+  };
+
+  const handleClickNotification = (n) => {
+    markAsRead(n.id);
+    setIsOpen(false);
+    if (n.txId) {
+      navigate(`/transactions/${n.txId}`);
+    } else {
+      navigate("/transactions");
+    }
   };
 
   const getNotificationIcon = (type) => {
     if (type === "credit") {
       return (
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-400">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-400">
           <ArrowDownLeft size={17} />
         </div>
       );
     }
-
     if (type === "debit") {
       return (
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-red-500/10 text-red-400">
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-500/10 text-blue-400">
           <ArrowUpRight size={17} />
         </div>
       );
     }
-
     return (
-      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-500/10 text-blue-400">
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-purple-500/10 text-purple-400">
         <ShieldCheck size={17} />
       </div>
     );
@@ -88,47 +136,39 @@ const NotificationDropdown = () => {
 
   return (
     <div className="relative">
-      {/* Notification button */}
+      {/* Notification Trigger Button */}
       <button
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
         aria-label="Notifications"
-        className="relative flex h-10 w-10 items-center justify-center rounded-xl text-slate-400 transition hover:bg-white/5 hover:text-white"
+        className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-slate-900 text-slate-300 transition hover:bg-white/5 hover:text-white"
       >
-        <Bell size={20} />
-
-        {/* Unread indicator */}
+        <Bell size={18} />
         {unreadCount > 0 && (
-          <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-blue-500 ring-2 ring-slate-950" />
+          <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-blue-600 text-[10px] font-bold text-white shadow-sm ring-2 ring-slate-950">
+            {unreadCount > 9 ? "9+" : unreadCount}
+          </span>
         )}
       </button>
 
-      {/* Dropdown */}
+      {/* Dropdown Card */}
       {isOpen && (
         <>
           {/* Mobile backdrop */}
-          <button
-            type="button"
-            aria-label="Close notifications"
+          <div
             onClick={() => setIsOpen(false)}
-            className="fixed inset-0 z-40 cursor-default bg-black/20 lg:hidden"
+            className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm lg:hidden"
           />
 
-          <div className="absolute right-0 top-12 z-50 w-[calc(100vw-2rem)] max-w-sm overflow-hidden rounded-2xl border border-white/10 bg-slate-900 shadow-2xl">
-
+          <div className="absolute right-0 top-12 z-50 w-[calc(100vw-2rem)] max-w-sm overflow-hidden rounded-3xl border border-white/10 bg-slate-900 shadow-2xl">
             {/* Header */}
-            <div className="flex items-center justify-between border-b border-white/10 px-4 py-4">
+            <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
               <div>
-                <h3 className="text-sm font-semibold text-white">
-                  Notifications
-                </h3>
-
-                <p className="mt-0.5 text-xs text-slate-500">
+                <h3 className="text-sm font-bold text-white">Notifications</h3>
+                <p className="mt-0.5 text-[11px] text-slate-400">
                   {unreadCount > 0
-                    ? `${unreadCount} unread notification${
-                        unreadCount > 1 ? "s" : ""
-                      }`
-                    : "You're all caught up"}
+                    ? `${unreadCount} unread update${unreadCount > 1 ? "s" : ""}`
+                    : "All updates caught up"}
                 </p>
               </div>
 
@@ -137,80 +177,55 @@ const NotificationDropdown = () => {
                   <button
                     type="button"
                     onClick={markAllAsRead}
-                    className="flex items-center gap-1 rounded-lg px-2 py-1.5 text-xs font-medium text-blue-400 transition hover:bg-blue-500/10"
+                    className="flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-semibold text-blue-400 transition hover:bg-blue-500/10"
                   >
                     <CheckCheck size={14} />
                     Mark all read
                   </button>
                 )}
-
                 <button
                   type="button"
                   onClick={() => setIsOpen(false)}
-                  className="flex h-8 w-8 items-center justify-center rounded-lg text-slate-500 transition hover:bg-white/5 hover:text-white"
-                  aria-label="Close notifications"
+                  className="rounded-lg p-1.5 text-slate-400 transition hover:bg-white/10 hover:text-white"
                 >
-                  <X size={17} />
+                  <X size={16} />
                 </button>
               </div>
             </div>
 
-            {/* Notification list */}
-            <div className="max-h-[380px] overflow-y-auto">
-
+            {/* List */}
+            <div className="max-h-[360px] divide-y divide-white/5 overflow-y-auto">
               {notifications.length === 0 ? (
-                <div className="flex flex-col items-center justify-center px-6 py-12 text-center">
-                  <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-white/5 text-slate-500">
-                    <Bell size={21} />
-                  </div>
-
-                  <p className="text-sm font-medium text-white">
-                    No notifications
-                  </p>
-
-                  <p className="mt-1 text-xs text-slate-500">
-                    You're all caught up.
-                  </p>
+                <div className="p-8 text-center text-xs text-slate-500">
+                  No notifications yet.
                 </div>
               ) : (
-                notifications.map((notification) => (
+                notifications.map((item) => (
                   <div
-                    key={notification.id}
-                    className={`flex gap-3 border-b border-white/5 px-4 py-4 transition hover:bg-white/[0.03] ${
-                      !notification.read ? "bg-blue-500/[0.03]" : ""
+                    key={item.id}
+                    onClick={() => handleClickNotification(item)}
+                    className={`flex cursor-pointer gap-3.5 p-4 transition hover:bg-white/[0.04] ${
+                      !item.read ? "bg-blue-600/[0.06]" : ""
                     }`}
                   >
-                    {getNotificationIcon(notification.type)}
+                    {getNotificationIcon(item.type)}
 
                     <div className="min-w-0 flex-1">
-                      <div className="flex items-start justify-between gap-2">
-                        <p className="text-sm font-medium text-white">
-                          {notification.title}
-                        </p>
-
-                        {!notification.read && (
-                          <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-blue-500" />
+                      <div className="flex items-center justify-between gap-1">
+                        <p className="text-xs font-bold text-white">{item.title}</p>
+                        {!item.read && (
+                          <span className="h-1.5 w-1.5 rounded-full bg-blue-500" />
                         )}
                       </div>
 
-                      <p className="mt-1 text-xs leading-5 text-slate-400">
-                        {notification.message}
-                      </p>
+                      <p className="mt-0.5 text-xs text-slate-300">{item.message}</p>
 
-                      <div className="mt-2 flex items-center justify-between">
-                        <span className="text-[11px] text-slate-600">
-                          {notification.time}
-                        </span>
-
-                        {!notification.read && (
-                          <button
-                            type="button"
-                            onClick={() => markAsRead(notification.id)}
-                            className="flex items-center gap-1 text-[11px] font-medium text-blue-400 hover:text-blue-300"
-                          >
-                            <Check size={13} />
-                            Mark read
-                          </button>
+                      <div className="mt-1.5 flex items-center justify-between text-[10px] text-slate-500">
+                        <span>{item.time}</span>
+                        {item.txId && (
+                          <span className="inline-flex items-center gap-0.5 text-blue-400">
+                            Receipt <ExternalLink size={10} />
+                          </span>
                         )}
                       </div>
                     </div>
@@ -220,15 +235,18 @@ const NotificationDropdown = () => {
             </div>
 
             {/* Footer */}
-            <div className="border-t border-white/10 px-4 py-3">
+            <div className="border-t border-white/10 bg-slate-950/50 px-4 py-3 text-center">
               <button
                 type="button"
-                className="w-full rounded-lg py-2 text-xs font-medium text-slate-400 transition hover:bg-white/5 hover:text-white"
+                onClick={() => {
+                  setIsOpen(false);
+                  navigate("/transactions");
+                }}
+                className="text-xs font-semibold text-blue-400 hover:text-blue-300"
               >
-                View all notifications
+                View all transactions & statement
               </button>
             </div>
-
           </div>
         </>
       )}

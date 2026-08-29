@@ -1,8 +1,9 @@
-const transactionModel = require("../models/transaction.model")
-const ledgerModel = require("../models/ledger.model")
-const accountModel = require("../models/account.model")
+const transactionModel = require("../models/transaction.model");
+const ledgerModel = require("../models/ledger.model");
+const accountModel = require("../models/account.model");
+const userModel = require("../models/user.model");
 const emailService = require("../services/email.service");
-const  mongoose  = require("mongoose");
+const mongoose = require("mongoose");
 
 /**
  * - Create a new Transaction
@@ -38,7 +39,7 @@ async function createTransaction(req,res) {
 
     const toUserAccount = await accountModel.findOne({
         _id:toAccount
-    })
+    }).populate("user")
 
     if(!fromUserAccount || !toUserAccount){
         return res.status(400).json({
@@ -157,9 +158,20 @@ async function createTransaction(req,res) {
     }
 
     /**
-     * 10. Send email notification
+     * 10. Send email notifications (non-blocking)
      */
-    await emailService.sendTransactionEmail(req.user.email,req.user.name,amount,toAccount)
+    if (req.user?.email) {
+        emailService.sendTransactionEmail(req.user.email, req.user.name, amount, toAccount).catch(err => {
+            console.warn("Sender transfer email error:", err.message);
+        });
+    }
+
+    if (toUserAccount?.user?.email) {
+        emailService.sendPaymentReceivedEmail(toUserAccount.user.email, toUserAccount.user.name, amount, req.user.name, toAccount).catch(err => {
+            console.warn("Recipient credit email error:", err.message);
+        });
+    }
+
     return res.status(201).json({
         message: "Transaction Completed Successfully!",
         transaction: transaction
@@ -303,8 +315,149 @@ async function getUserTransactions(req, res) {
     }
 }
 
+/**
+ * POST /api/transaction/deposit
+ * Deposit funds to self account
+ */
+async function depositFunds(req, res) {
+    try {
+        const { toAccount, amount, paymentMethod, idempotencyKey } = req.body;
+
+        if (!toAccount || !amount || !idempotencyKey) {
+            return res.status(400).json({
+                message: "toAccount, amount, and idempotencyKey are required.",
+            });
+        }
+
+        const numericAmount = Number(amount);
+        if (isNaN(numericAmount) || numericAmount <= 0) {
+            return res.status(400).json({
+                message: "Deposit amount must be a positive number greater than 0.",
+            });
+        }
+
+        // Verify account belongs to logged-in user
+        const targetAccount = await accountModel.findOne({
+            _id: toAccount,
+            user: req.user._id,
+        });
+
+        if (!targetAccount) {
+            return res.status(404).json({
+                message: "Target account not found or does not belong to your profile.",
+            });
+        }
+
+        if (targetAccount.status !== "ACTIVE") {
+            return res.status(400).json({
+                message: "Cannot deposit funds into a non-active account.",
+            });
+        }
+
+        // Idempotency check
+        const existingTx = await transactionModel.findOne({ idempotencyKey });
+        if (existingTx) {
+            return res.status(200).json({
+                message: "Deposit transaction already processed.",
+                transaction: existingTx,
+            });
+        }
+
+        // Find or provision dedicated Internal System Treasury User & Account
+        let systemUser = await userModel.findOne({ email: "treasury@finova.internal" }).select("+systemUser");
+        if (!systemUser) {
+            systemUser = await userModel.create({
+                name: "Finova Central Treasury Reserve",
+                email: "treasury@finova.internal",
+                password: "FinovaTreasuryVaultSecretKey2026!",
+                systemUser: true,
+            });
+        }
+
+        let systemAccount = await accountModel.findOne({ user: systemUser._id });
+        if (!systemAccount) {
+            systemAccount = await accountModel.create({
+                user: systemUser._id,
+                status: "ACTIVE",
+                currency: "INR",
+            });
+        }
+
+        const session = await mongoose.startSession();
+        session.startTransaction();
+
+        let transaction;
+        try {
+            transaction = (await transactionModel.create([{
+                fromAccount: systemAccount._id,
+                toAccount: targetAccount._id,
+                amount: numericAmount,
+                idempotencyKey,
+                status: "COMPLETED",
+            }], { session }))[0];
+
+            // Double-entry ledger: DEBIT system treasury, CREDIT user account
+            await ledgerModel.create([{
+                account: systemAccount._id,
+                amount: numericAmount,
+                transaction: transaction._id,
+                type: "DEBIT",
+            }], { session });
+
+            await ledgerModel.create([{
+                account: targetAccount._id,
+                amount: numericAmount,
+                transaction: transaction._id,
+                type: "CREDIT",
+            }], { session });
+
+            await session.commitTransaction();
+            session.endSession();
+        } catch (dbErr) {
+            await session.abortTransaction();
+            session.endSession();
+            console.error("Deposit session error:", dbErr);
+            return res.status(500).json({
+                message: "Deposit failed during ledger transaction. Please try again.",
+            });
+        }
+
+        // Fetch updated account balance
+        const newBalance = await targetAccount.getBalance();
+
+        // Email notification
+        try {
+            if (req.user?.email) {
+                emailService.sendDepositEmail(
+                    req.user.email,
+                    req.user.name,
+                    numericAmount,
+                    targetAccount._id
+                ).catch(mailErr => {
+                    console.warn("Deposit email notification failed:", mailErr.message);
+                });
+            }
+        } catch (mailErr) {
+            console.warn("Deposit email notification failed:", mailErr.message);
+        }
+
+        return res.status(201).json({
+            message: "Deposit completed successfully! Funds added to your account.",
+            transaction,
+            newBalance,
+        });
+    } catch (error) {
+        console.error("Deposit error:", error);
+        return res.status(500).json({
+            message: "Failed to process deposit.",
+            error: error.message,
+        });
+    }
+}
+
 module.exports = {
     createTransaction,
     createInitialFundsTransaction,
     getUserTransactions,
-}
+    depositFunds,
+};

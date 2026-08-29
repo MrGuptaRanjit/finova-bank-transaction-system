@@ -1,6 +1,6 @@
 import { Eye, EyeOff, LockKeyhole, Mail } from "lucide-react";
 import { useState } from "react";
-import { Link, useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router-dom";
 import AuthLayout from "../../components/layout/AuthLayout";
 import Button from "../../components/ui/Button";
 import { loginUser } from "../../services/auth.service";
@@ -86,7 +86,7 @@ const Login = () => {
       console.log("Login successful:", data);
 
       // Store authenticated user in AuthContext
-      login(data.user);
+      login(data.user, data.token);
 
       // Redirect to dashboard
       navigate("/dashboard");

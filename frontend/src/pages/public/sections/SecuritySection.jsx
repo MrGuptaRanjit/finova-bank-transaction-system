@@ -1,12 +1,8 @@
 import {
-  ArrowRight,
-  CheckCircle2,
   Eye,
   LockKeyhole,
   ReceiptText,
   ShieldCheck,
-  TrendingUp,
-  Wallet,
 } from "lucide-react";
 const SecuritySection = () => {
   return (

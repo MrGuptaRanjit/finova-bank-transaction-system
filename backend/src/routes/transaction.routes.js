@@ -16,6 +16,16 @@ transactionRoutes.post(
 );
 
 /**
+ * POST /api/transaction/deposit
+ * Deposit funds directly into self account
+ */
+transactionRoutes.post(
+    "/deposit",
+    authMiddleware.authMiddleware,
+    transactionController.depositFunds
+);
+
+/**
  * POST /api/transaction/system/initial-funds
  * Create initial funds transaction from system user
  */

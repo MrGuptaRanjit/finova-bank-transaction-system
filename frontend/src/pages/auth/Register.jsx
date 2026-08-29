@@ -1,6 +1,6 @@
 import { Eye, EyeOff, LockKeyhole, Mail, User } from "lucide-react";
 import { useState } from "react";
-import { Link, useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router-dom";
 import AuthLayout from "../../components/layout/AuthLayout";
 import Button from "../../components/ui/Button";
 import { validateRegisterForm } from "../../utils/validation";
@@ -69,7 +69,7 @@ const handleSubmit = async (event) => {
     console.log("Registration successful:", data);
 
     // Store authenticated user
-    login(data.user);
+    login(data.user, data.token);
 
     // Redirect to dashboard
     navigate("/dashboard");
