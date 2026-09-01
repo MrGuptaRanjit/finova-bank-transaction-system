@@ -6,7 +6,8 @@ const app = express();
 
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: 
+      "https://finova-bank-transaction.netlify.app",
     credentials: true,
   })
 );
